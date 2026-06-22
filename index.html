@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Self Help Slip</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --blue:        #4A6CF7;
+    --blue-light:  #EEF1FE;
+    --blue-dark:   #3558E8;
+    --red:         #F74A4A;
+    --red-light:   #FEF0F0;
+    --green:       #22C55E;
+    --green-light: #F0FDF4;
+    --text:        #111827;
+    --text-muted:  #6B7280;
+    --border:      #E5E7EB;
+    --bg:          #F8F9FF;
+    --white:       #FFFFFF;
+    --radius:      12px;
+    --shadow:      0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(74,108,247,.06);
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 32px 16px 64px;
+  }
+
+  /* ── PERMISSION GATE ── */
+  #permission-gate {
+    position: fixed; inset: 0;
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 999; padding: 24px;
+  }
+  .gate-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    box-shadow: 0 8px 40px rgba(74,108,247,.14);
+    padding: 44px 36px 36px;
+    max-width: 400px; width: 100%;
+    text-align: center;
+  }
+  .gate-icon {
+    width: 72px; height: 72px;
+    background: var(--blue-light);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 22px;
+    color: var(--blue);
+  }
+  .gate-icon svg { width: 34px; height: 34px; }
+  .gate-card h2 { font-size: 22px; font-weight: 700; margin-bottom: 10px; }
+  .gate-card p  { font-size: 14px; color: var(--text-muted); line-height: 1.65; margin-bottom: 28px; }
+  .gate-allow-btn {
+    width: 100%; padding: 14px;
+    background: var(--blue); color: white;
+    font-family: inherit; font-size: 15px; font-weight: 700;
+    border: none; border-radius: 12px; cursor: pointer;
+    box-shadow: 0 4px 16px rgba(74,108,247,.4);
+    transition: background .15s; margin-bottom: 12px;
+  }
+  .gate-allow-btn:hover { background: var(--blue-dark); }
+  .gate-skip-btn {
+    background: none; border: none; font-family: inherit;
+    font-size: 13px; color: var(--text-muted); cursor: pointer; text-decoration: underline;
+  }
+  .gate-skip-btn:hover { color: var(--text); }
+  .gate-error {
+    margin-top: 16px; padding: 12px 14px;
+    background: var(--red-light); border: 1px solid #FECACA;
+    border-radius: 10px; font-size: 12.5px; color: #B91C1C;
+    text-align: left; line-height: 1.6; display: none;
+  }
+  .gate-error.visible { display: block; }
+
+  /* ── HEADER ── */
+  .header { text-align: center; margin-bottom: 32px; }
+  .header-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--blue-light); color: var(--blue);
+    font-size: 11px; font-weight: 700; letter-spacing: .07em;
+    text-transform: uppercase; padding: 4px 12px; border-radius: 100px; margin-bottom: 14px;
+  }
+  .header h1 { font-size: 28px; font-weight: 700; letter-spacing: -.4px; }
+  .header p  { margin-top: 6px; color: var(--text-muted); font-size: 14px; }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 28px; max-width: 680px; margin: 0 auto 20px;
+  }
+  .card-title {
+    font-size: 11px; font-weight: 700; letter-spacing: .09em;
+    text-transform: uppercase; color: var(--blue); margin-bottom: 20px;
+  }
+
+  /* ── GRID ── */
+  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media(max-width:520px){ .field-grid { grid-template-columns: 1fr; } }
+  .field-full { grid-column: 1 / -1; }
+
+  /* ── FIELDS ── */
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  label  { font-size: 13px; font-weight: 600; }
+  label span.req { color: var(--blue); }
+
+  input[type="text"], input[type="email"], select, textarea {
+    width: 100%; padding: 10px 14px;
+    border: 1.5px solid var(--border); border-radius: 8px;
+    font-family: inherit; font-size: 14px; color: var(--text);
+    background: var(--white); outline: none; transition: border-color .2s;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--blue); box-shadow: 0 0 0 3px rgba(74,108,247,.12);
+  }
+  textarea { resize: vertical; min-height: 88px; line-height: 1.6; }
+  select   { cursor: pointer; }
+
+  /* ── RESPONSE FIELD ── */
+  .input-mode-toggle { display: flex; gap: 6px; margin-bottom: 2px; }
+  .mode-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 12px; font-size: 12px; font-weight: 600;
+    border-radius: 100px; border: 1.5px solid var(--border);
+    background: var(--white); color: var(--text-muted); cursor: pointer; transition: all .15s;
+  }
+  .mode-btn.active { background: var(--blue-light); border-color: var(--blue); color: var(--blue); }
+  .mode-btn svg { width: 13px; height: 13px; }
+  .text-input-area  {}
+  .voice-input-area { display: none; flex-direction: column; gap: 10px; }
+  .voice-input-area.visible { display: flex; }
+
+  /* ── RECORDER ── */
+  .recorder {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px; border: 1.5px solid var(--border);
+    border-radius: 8px; background: #FAFAFA;
+  }
+  .mic-btn {
+    width: 42px; height: 42px; border-radius: 50%; border: none;
+    background: var(--blue); color: white; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: background .15s, transform .1s;
+  }
+  .mic-btn:hover  { background: var(--blue-dark); }
+  .mic-btn:active { transform: scale(.95); }
+  .mic-btn.recording { background: var(--red); animation: pulse 1.4s ease infinite; }
+  .mic-btn svg { width: 18px; height: 18px; }
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(247,74,74,.4); }
+    50%      { box-shadow: 0 0 0 9px rgba(247,74,74,0); }
+  }
+  .recorder-info { flex: 1; min-width: 0; }
+  .recorder-status { font-size: 13px; font-weight: 600; }
+  .recorder-status.recording { color: var(--red); }
+  .recorder-hint { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .rec-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--red);
+    display: inline-block; margin-right: 4px; animation: blink 1s step-start infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  audio { width: 100%; height: 36px; border-radius: 8px; outline: none; }
+  .audio-preview { display: none; flex-direction: column; gap: 6px; }
+  .audio-preview.visible { display: flex; }
+  .audio-label {
+    font-size: 11px; font-weight: 600; color: var(--green);
+    display: flex; align-items: center; gap: 4px;
+  }
+  .redo-btn {
+    font-size: 11px; color: var(--text-muted); background: none; border: none;
+    cursor: pointer; text-decoration: underline; padding: 0; font-family: inherit;
+  }
+  .redo-btn:hover { color: var(--red); }
+
+  .section-divider { border: none; border-top: 1px solid var(--border); margin: 22px 0; }
+
+  /* ── SUBMIT ── */
+  .submit-wrap { max-width: 680px; margin: 0 auto; }
+  .submit-btn {
+    width: 100%; padding: 14px;
+    background: var(--blue); color: white;
+    font-family: inherit; font-size: 15px; font-weight: 700;
+    border: none; border-radius: var(--radius); cursor: pointer;
+    box-shadow: 0 4px 14px rgba(74,108,247,.35);
+    transition: background .15s, transform .1s;
+  }
+  .submit-btn:hover   { background: var(--blue-dark); }
+  .submit-btn:active  { transform: scale(.99); }
+  .submit-btn:disabled { background: #A5B4FC; box-shadow: none; cursor: not-allowed; }
+
+  /* ── STATUS ── */
+  #status-msg {
+    max-width: 680px; margin: 16px auto 0; padding: 14px 18px;
+    border-radius: 10px; font-size: 14px; font-weight: 500; display: none;
+    align-items: center; gap: 10px;
+  }
+  #status-msg.success { display:flex; background:var(--green-light); color:#15803D; border:1px solid #BBF7D0; }
+  #status-msg.error   { display:flex; background:var(--red-light);   color:#B91C1C; border:1px solid #FECACA; }
+  #status-msg svg { width:18px; height:18px; flex-shrink:0; }
+</style>
+</head>
+<body>
+
+<!-- ── PERMISSION GATE ── -->
+<div id="permission-gate">
+  <div class="gate-card">
+    <div class="gate-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/>
+        <path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/>
+      </svg>
+    </div>
+    <h2>Microphone Access</h2>
+    <p>This form lets you record voice answers.<br/>Tap <strong>Allow Microphone</strong> and then tap <strong>Allow</strong> when your browser asks.</p>
+    <button class="gate-allow-btn" onclick="requestMicPermission()">Allow Microphone</button><br/>
+    <button class="gate-skip-btn"  onclick="skipMicPermission()">I'll only type — skip this</button>
+    <div class="gate-error" id="gate-error"></div>
+  </div>
+</div>
+
+<!-- ── HEADER ── -->
+<div class="header">
+  <div class="header-badge">Internal Tool</div>
+  <h1>Self Help Slip</h1>
+  <p>Document your challenge and solutions — type or record your voice.</p>
+</div>
+
+<!-- ── SECTION 1: IDENTITY ── -->
+<div class="card">
+  <div class="card-title">Your Details</div>
+  <div class="field-grid">
+    <div class="field">
+      <label for="f-email">Email <span class="req">*</span></label>
+      <input type="email" id="f-email" placeholder="you@company.com"/>
+    </div>
+    <div class="field">
+      <label for="f-name">Full Name <span class="req">*</span></label>
+      <input type="text" id="f-name" placeholder="Jane Doe"/>
+    </div>
+    <div class="field field-full">
+      <label for="f-dept">Department <span class="req">*</span></label>
+      <select id="f-dept">
+        <option value="" disabled selected>Select your department</option>
+        <option>Engineering</option><option>Product</option><option>Design</option>
+        <option>Marketing</option><option>Sales</option><option>HR</option>
+        <option>Finance</option><option>Operations</option>
+        <option>Customer Support</option><option>Other</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- ── SECTION 2: CHALLENGE + SOLUTIONS ── -->
+<div class="card">
+  <div class="card-title">Challenge &amp; Solutions</div>
+
+  <div class="field" style="margin-bottom:22px">
+    <label>Challenge Faced / Question <span class="req">*</span></label>
+    <div class="response-field" id="field-challenge"></div>
+  </div>
+  <hr class="section-divider"/>
+  <div class="field" style="margin-bottom:22px">
+    <label>Best Solution</label>
+    <div class="response-field" id="field-solution1"></div>
+  </div>
+  <hr class="section-divider"/>
+  <div class="field" style="margin-bottom:22px">
+    <label>Second Best Solution</label>
+    <div class="response-field" id="field-solution2"></div>
+  </div>
+  <hr class="section-divider"/>
+  <div class="field">
+    <label>Third Best Solution</label>
+    <div class="response-field" id="field-solution3"></div>
+  </div>
+</div>
+
+<!-- ── SUBMIT ── -->
+<div class="submit-wrap">
+  <button class="submit-btn" id="submit-btn" onclick="submitForm()">Submit Self Help Slip</button>
+</div>
+<div id="status-msg"></div>
+
+<script>
+// ── IMPORTANT: paste your deployed Apps Script Web App URL here ──────────────
+const APPS_SCRIPT_URL = 'PASTE_YOUR_APPS_SCRIPT_URL_HERE';
+
+// ── FIELDS ───────────────────────────────────────────────────────────────────
+const FIELDS = ['challenge','solution1','solution2','solution3'];
+const PLACEHOLDERS = {
+  challenge: 'Describe the challenge or question you faced…',
+  solution1: 'What was your best solution?',
+  solution2: 'What was your second best option?',
+  solution3: 'Any third alternative?',
+};
+const recorderState = {};
+FIELDS.forEach(id => {
+  recorderState[id] = { mode:'text', mediaRecorder:null, chunks:[], blob:null, recording:false };
+  buildResponseField(id);
+});
+
+function buildResponseField(id) {
+  document.getElementById('field-'+id).innerHTML = `
+    <div class="input-mode-toggle">
+      <button type="button" class="mode-btn active" id="btn-text-${id}" onclick="setMode('${id}','text')">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 3.5A.5.5 0 012.5 3h11a.5.5 0 010 1H13v9.5a.5.5 0 01-1 0V4H4v9.5a.5.5 0 01-1 0V4H2.5A.5.5 0 012 3.5zM6 4h4v1H6V4z"/></svg>
+        Type
+      </button>
+      <button type="button" class="mode-btn" id="btn-voice-${id}" onclick="setMode('${id}','voice')">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M5 3a3 3 0 016 0v5a3 3 0 01-6 0V3zm3 8.5A5.5 5.5 0 002.5 6a.5.5 0 00-1 0 6.5 6.5 0 006 6.483V14H6a.5.5 0 000 1h4a.5.5 0 000-1H8.5v-1.517A6.5 6.5 0 0014.5 6a.5.5 0 00-1 0A5.5 5.5 0 018 11.5z"/></svg>
+        Voice
+      </button>
+    </div>
+    <div class="text-input-area" id="text-area-${id}">
+      <textarea id="textarea-${id}" placeholder="${PLACEHOLDERS[id]}" rows="3"></textarea>
+    </div>
+    <div class="voice-input-area" id="voice-area-${id}">
+      <div class="recorder">
+        <button type="button" class="mic-btn" id="mic-btn-${id}" onclick="toggleRecording('${id}')">
+          ${micIcon()}
+        </button>
+        <div class="recorder-info">
+          <div class="recorder-status" id="rec-status-${id}">Ready to record</div>
+          <div class="recorder-hint"   id="rec-hint-${id}">Press the mic to start</div>
+        </div>
+      </div>
+      <div class="audio-preview" id="audio-preview-${id}">
+        <div class="audio-label">
+          <svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>
+          Recording saved
+          <button type="button" class="redo-btn" onclick="redoRecording('${id}')">Re-record</button>
+        </div>
+        <audio id="audio-player-${id}" controls></audio>
+      </div>
+    </div>`;
+}
+
+function micIcon() { return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/></svg>`; }
+function stopIcon() { return `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>`; }
+
+// ── PERMISSION GATE ───────────────────────────────────────────────────────────
+async function requestMicPermission() {
+  const errEl = document.getElementById('gate-error');
+  errEl.classList.remove('visible');
+
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    errEl.textContent = '⚠ Your browser does not support audio recording. Try Chrome or Samsung Internet.';
+    errEl.classList.add('visible'); return;
+  }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    stream.getTracks().forEach(t => t.stop());
+    document.getElementById('permission-gate').style.display = 'none';
+  } catch(err) {
+    let msg = '';
+    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+      msg = '🚫 You tapped "Deny". To fix on Android:<br/><br/>'
+          + '1. Tap the <strong>🔒 lock icon</strong> in the address bar<br/>'
+          + '2. Tap <strong>Permissions → Microphone → Allow</strong><br/>'
+          + '3. Refresh the page and try again';
+    } else if (err.name === 'NotFoundError') {
+      msg = '🎤 No microphone found. You can still use the text fields.';
+    } else if (err.name === 'NotReadableError') {
+      msg = '⚠ Microphone is busy. Close other apps using it and try again.';
+    } else {
+      msg = `Error: <code>${err.name}: ${err.message}</code>`;
+    }
+    errEl.innerHTML = msg; errEl.classList.add('visible');
+  }
+}
+function skipMicPermission() {
+  document.getElementById('permission-gate').style.display = 'none';
+}
+
+// ── MODE SWITCH ───────────────────────────────────────────────────────────────
+function setMode(id, mode) {
+  recorderState[id].mode = mode;
+  document.getElementById('btn-text-'+id).classList.toggle('active', mode==='text');
+  document.getElementById('btn-voice-'+id).classList.toggle('active', mode==='voice');
+  document.getElementById('text-area-'+id).style.display = mode==='text' ? '' : 'none';
+  document.getElementById('voice-area-'+id).classList.toggle('visible', mode==='voice');
+}
+
+// ── RECORDING ────────────────────────────────────────────────────────────────
+async function toggleRecording(id) {
+  recorderState[id].recording ? stopRecording(id) : await startRecording(id);
+}
+async function startRecording(id) {
+  const s = recorderState[id];
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    s.chunks = []; s.blob = null;
+    const opts = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? {mimeType:'audio/webm;codecs=opus'} : {};
+    s.mediaRecorder = new MediaRecorder(stream, opts);
+    s.mediaRecorder.ondataavailable = e => { if(e.data.size) s.chunks.push(e.data); };
+    s.mediaRecorder.onstop = () => {
+      stream.getTracks().forEach(t => t.stop());
+      s.blob = new Blob(s.chunks, { type: s.mediaRecorder.mimeType || 'audio/webm' });
+      document.getElementById('audio-player-'+id).src = URL.createObjectURL(s.blob);
+      document.getElementById('audio-preview-'+id).classList.add('visible');
+      setRecUI(id, 'done');
+    };
+    s.mediaRecorder.start(); s.recording = true; setRecUI(id, 'recording');
+  } catch(err) {
+    let msg = err.name === 'NotAllowedError'
+      ? 'Microphone blocked. Tap the 🔒 lock icon → Permissions → Microphone → Allow.'
+      : `${err.name}: ${err.message}`;
+    setRecUI(id, 'error', msg);
+  }
+}
+function stopRecording(id) {
+  const s = recorderState[id];
+  if (s.mediaRecorder && s.recording) { s.mediaRecorder.stop(); s.recording = false; }
+}
+function redoRecording(id) {
+  const s = recorderState[id]; s.blob=null; s.chunks=[]; s.recording=false;
+  document.getElementById('audio-preview-'+id).classList.remove('visible');
+  document.getElementById('audio-player-'+id).src = '';
+  setRecUI(id, 'idle');
+}
+function setRecUI(id, state, errMsg) {
+  const btn = document.getElementById('mic-btn-'+id);
+  const st  = document.getElementById('rec-status-'+id);
+  const ht  = document.getElementById('rec-hint-'+id);
+  if (state==='recording') {
+    btn.innerHTML=stopIcon(); btn.classList.add('recording');
+    st.innerHTML=`<span class="rec-dot"></span>Recording…`; st.className='recorder-status recording';
+    ht.textContent='Tap stop when done';
+  } else if (state==='done') {
+    btn.innerHTML=micIcon(); btn.classList.remove('recording');
+    st.textContent='Recording complete'; st.className='recorder-status'; ht.textContent='Listen below or re-record';
+  } else if (state==='error') {
+    btn.innerHTML=micIcon(); btn.classList.remove('recording');
+    st.textContent='Mic error'; st.className='recorder-status'; ht.textContent=errMsg||'Check permissions';
+  } else {
+    btn.innerHTML=micIcon(); btn.classList.remove('recording');
+    st.textContent='Ready to record'; st.className='recorder-status'; ht.textContent='Press the mic to start';
+  }
+}
+
+// ── SUBMIT ────────────────────────────────────────────────────────────────────
+async function submitForm() {
+  const email = document.getElementById('f-email').value.trim();
+  const name  = document.getElementById('f-name').value.trim();
+  const dept  = document.getElementById('f-dept').value;
+  if (!email || !name || !dept) { showStatus('error','Please fill in your email, name, and department.'); return; }
+  const challengePayload = await getFieldPayload('challenge');
+  if (!challengePayload.value) { showStatus('error','Please describe the challenge you faced.'); return; }
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled=true; btn.textContent='Submitting…';
+
+  try {
+    const payload = {
+      email, name, department: dept,
+      challenge: challengePayload,
+      solution1: await getFieldPayload('solution1'),
+      solution2: await getFieldPayload('solution2'),
+      solution3: await getFieldPayload('solution3'),
+    };
+
+    const res  = await fetch(APPS_SCRIPT_URL, {
+      method:  'POST',
+      // Note: no 'Content-Type' header — avoids CORS preflight on Apps Script
+      body:    JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (data.success) {
+      showStatus('success','✓ Your Self Help Slip has been submitted. Thank you!');
+      resetForm();
+    } else {
+      showStatus('error','Submission failed: ' + data.error);
+    }
+  } catch(e) {
+    showStatus('error','Network error: ' + e.message);
+  }
+
+  btn.disabled=false; btn.textContent='Submit Self Help Slip';
+}
+
+async function getFieldPayload(id) {
+  const s = recorderState[id];
+  if (s.mode==='voice' && s.blob) {
+    const b64 = await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(s.blob); });
+    return { type:'audio', value: b64.split(',')[1] };
+  }
+  return { type:'text', value: (document.getElementById('textarea-'+id)||{}).value?.trim()||'' };
+}
+
+function resetForm() {
+  document.getElementById('f-email').value='';
+  document.getElementById('f-name').value='';
+  document.getElementById('f-dept').value='';
+  FIELDS.forEach(id => {
+    recorderState[id]={mode:'text',mediaRecorder:null,chunks:[],blob:null,recording:false};
+    buildResponseField(id);
+  });
+}
+
+function showStatus(type, msg) {
+  const el = document.getElementById('status-msg');
+  const icon = type==='success'
+    ? `<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>`
+    : `<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>`;
+  el.className=type; el.innerHTML=icon+msg;
+  el.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+</script>
+</body>
+</html>
